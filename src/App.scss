@@ -1,3 +1,10 @@
+body {
+  font-family: sans-serif;
+
+  margin: 0;
+  padding: 0;
+}
+
 .App {
   display: flex;
   flex-direction: column;
@@ -12,14 +19,14 @@
 }
 
 .game-map {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
+  position: relative;
+
+  display: flex;
+  flex-direction: row;
+
+  flex-wrap: wrap;
 }
 
-body {
-  font-family: sans-serif;
-
-  margin: 0;
-  padding: 0;
+.player-positioner {
+  position: relative;
 }

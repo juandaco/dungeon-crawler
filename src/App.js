@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
+
 import './App.css';
 
 // Components
 import GameMap from './components/game-map';
-// import Helpers from './classes/helpers';
+import Player from './components/player.js';
 
 
 class App extends Component {
@@ -21,16 +22,22 @@ class App extends Component {
       board,
       enemies: [],
       health: [],
-      weapons: [],
+      weapons: [
+        { type: 'Dagger', damage: '5' },
+        { type: 'Mace', damage: '10' },
+        { type: 'Axe', damage: '15' },
+        { type: 'dagger', damage: '20' },
+      ],
       door: [],
       player: {
+        x: 0,
+        y: 0,
         health: 100,
         level: 1,
         weapon: {
-          type: "stick",
-          damage: 5
+          type: 'Wooden Stick',
+          damage: 3
         },
-        position: [0, 0], // Should be the middle of the board
       },
       boss: {},
       level: 0,
@@ -39,11 +46,47 @@ class App extends Component {
     // Method's bindings
     this.createMap = this.createMap.bind(this);
     this.clearBoard = this.clearBoard.bind(this);
-    this.addEnemies = this.addEnemies.bind(this);
+    this.handleKeyboard = this.handleKeyboard.bind(this);
   }
 
   componentDidMount() {
     this.createMap();
+
+    // Add Keyboard Event Listener
+    window.onkeydown = (e) => {
+      this.handleKeyboard(e);
+    };
+  }
+
+  handleKeyboard(e) {
+    let board = this.state.board;
+    let player = this.state.player;
+    let index = player.x + player.y * this.state.boardW;
+
+    if (e.key === 'ArrowRight') {
+    	let right = board[index + 1];
+
+      if ( right === 1) {
+        player.x++;
+      } 
+      
+    } else if (e.key === 'ArrowLeft') {
+      if (board[index - 1] === 1) {
+        player.x--;
+      }
+    } else if (e.key === 'ArrowUp') {
+      if (board[index - this.state.boardW] === 1) {
+        player.y--;
+      }
+    } else if (e.key === 'ArrowDown') {
+      if (board[index + this.state.boardW] === 1) {
+        player.y++;
+      }
+    }
+
+    this.setState({
+      player,
+    });
   }
 
   clearBoard() {
@@ -234,7 +277,6 @@ class App extends Component {
 
     // Set both rooms and paths in the board
     setPosInBoard(posGeneral);
-    setPosInBoard(paths);
 
 
     // Get possible sposts on the board
@@ -246,7 +288,9 @@ class App extends Component {
       }
     }).filter((position => position));
 
-    let enemies = new Array(15);    
+
+
+    let enemies = new Array(15);
     // Create Enemies
     for (let i = 0; i < enemies.length; i++) {
       let rnd = possible[Math.floor(Math.random() * possible.length)];
@@ -260,6 +304,8 @@ class App extends Component {
 
       possible.splice(possible.indexOf(rnd), 1);
     }
+
+
 
     let healthPack = new Array(10);
     // Health Items
@@ -276,28 +322,52 @@ class App extends Component {
       possible.splice(possible.indexOf(rnd), 1);
     }
 
+    // Weapon for level
+    let rnd = possible[Math.floor(Math.random() * possible.length)];
+    newBoard[rnd] = 'weapon';
+
+
+    // Door to next level
+    rnd = possible[Math.floor(Math.random() * possible.length)];
+    newBoard[rnd] = 'door';
+
+    // Player Position in board
+    rnd = possible[Math.floor(Math.random() * possible.length)];
+    let player = this.state.player;
+    player.x = rnd % this.state.boardW;
+    player.y = Math.floor(rnd / this.state.boardW);
+
+    setPosInBoard(paths);
+
     this.setState({
       board: newBoard,
       enemies: enemies,
       health: healthPack,
+      player,
     });
   }
 
   render() {
     return (
-      <div className="App">
-      	<GameMap 
-      		board={this.state.board} 
-      		width={this.state.boardW}
-      		height={this.state.boardH}
-      		tileSize={this.state.tileSize}
-      	/>
+      <div className="App" >
+      	{/* For positionning the player over GameMap */}
+      	<div className="player-positioner">
+	      	<GameMap 
+	      		board={this.state.board} 
+	      		width={this.state.boardW}
+	      		height={this.state.boardH}
+	      		tileSize={this.state.tileSize}
+	      	/>
+	      	<Player player={this.state.player} tileSize={this.state.tileSize} />
+      	</div>
       	{<button onClick={this.clearBoard} >Clear</button>}
       	{<button onClick={this.createMap} >Generate</button>}
       </div>
     );
   }
 }
+
+
 
 
 export default App;

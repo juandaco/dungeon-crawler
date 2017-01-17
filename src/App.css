@@ -1,3 +1,8 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0; }
+
 .App {
   display: flex;
   flex-direction: column;
@@ -8,13 +13,12 @@
   align-items: center; }
 
 .game-map {
+  position: relative;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap; }
 
-body {
-  font-family: sans-serif;
-  margin: 0;
-  padding: 0; }
+.player-positioner {
+  position: relative; }
 
 /*# sourceMappingURL=App.css.map */
