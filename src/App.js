@@ -20,10 +20,11 @@ class App extends Component {
       boardW,
       boardH,
       board,
+      darkness: true,
       enemies: [],
       weapons: [
         { type: 'Dagger', damage: 14 },
-        { type: 'Mace', damage: '10' },
+        { type: 'Mac7e', damage: '10' },
         { type: 'Axe', damage: '15' },
         { type: 'dagger', damage: '20' },
       ],
@@ -46,6 +47,7 @@ class App extends Component {
     this.createMap = this.createMap.bind(this);
     this.clearBoard = this.clearBoard.bind(this);
     this.handleKeyboard = this.handleKeyboard.bind(this);
+    this.toggleDarkness = this.toggleDarkness.bind(this);
   }
 
   componentDidMount() {
@@ -58,103 +60,104 @@ class App extends Component {
   }
 
   handleKeyboard(e) {
+    // Variable declaration
     let newBoard = this.state.board.slice();
     let player = this.state.player;
     let index = player.x + player.y * this.state.boardW;
+    let posValue, posIndex;
 
 
     if (e.key === 'ArrowRight') {
-      let right = newBoard[index + 1];
-
-      if (right === 1) {
-        player.x++;
-        newBoard[index + 1] = 1;
-        this.setState({
-          player,
-          board: newBoard,
-        });
-      } else if (right === 'health') {
-        player.health += 20;
-        player.x++;
-        newBoard[index + 1] = 1;
-        this.setState({
-          player,
-          board: newBoard,
-        });
-      } else if (right === 'weapon') {
-        player.weapon = this.state.weapons[this.state.level];
-        player.x++;
-        newBoard[index + 1] = 1;
-        this.setState({
-          player,
-          board: newBoard,
-        });
-      } else if (right === 'enemy') {
-
-        let newEnemies = this.state.enemies.slice();
-        let enemyIndex;
-
-        // Find enemy in array
-        let enemy = this.state.enemies.find((e, i) => {
-          enemyIndex = i;
-          return e.index === index + 1;
-        });
-
-        enemy.health -= Math.round(
-          (player.weapon.damage * 0.7) +
-          (player.weapon.damage * Math.random() * 0.3)
-        );
-
-        player.health -= Math.round(
-          ((this.state.level + 1) * 10 * Math.random())
-        );
-
-        if (enemy.health < 0) {
-          newEnemies.splice(enemyIndex, 1);
-          player.experience += 10;
-          newBoard[index + 1] = 1;
-
-        } else {
-          newEnemies[enemyIndex] = enemy;
-        }
-        this.setState({
-          board: newBoard,
-          enemies: newEnemies,
-          player,
-        });
-
-      } else if (right === 'door') {
-        newBoard.fill(0);
-        this.setState({
-          level: this.state.level + 1,
-        });
-
-        this.createMap();
-      }
-
+      posIndex = index + 1;
     } else if (e.key === 'ArrowLeft') {
-      if (newBoard[index - 1] === 1) {
-        player.x--;
-        this.setState({
-          player,
-        });
-      }
+      posIndex = index - 1;
     } else if (e.key === 'ArrowUp') {
-      if (newBoard[index - this.state.boardW] === 1) {
-        player.y--;
-        this.setState({
-          player,
-        });
-      }
+      posIndex = index - this.state.boardW;
     } else if (e.key === 'ArrowDown') {
-      if (newBoard[index + this.state.boardW] === 1) {
-        player.y++;
-        this.setState({
-          player,
-        });
+      posIndex = index + this.state.boardW;
+    }
+
+    posValue = newBoard[posIndex];
+
+    if (posValue === 1) {
+      player.x = posIndex % this.state.boardW;
+      player.y = Math.floor(posIndex / this.state.boardW);
+      newBoard[posIndex] = 1;
+      this.setState({
+        player,
+        board: newBoard,
+      });
+    } else if (posValue === 'health') {
+      player.health += 20;
+      player.x = posIndex % this.state.boardW;
+      player.y = Math.floor(posIndex / this.state.boardW);
+      newBoard[posIndex] = 1;
+      this.setState({
+        player,
+        board: newBoard,
+      });
+    } else if (posValue === 'weapon') {
+      player.weapon = this.state.weapons[this.state.level];
+      player.x = posIndex % this.state.boardW;
+      player.y = Math.floor(posIndex / this.state.boardW);
+      newBoard[posIndex] = 1;
+      this.setState({
+        player,
+        board: newBoard,
+      });
+    } else if (posValue === 'enemy') {
+
+      let newEnemies = this.state.enemies.slice();
+      let enemyIndex;
+
+      // Find enemy in array
+      let enemy = this.state.enemies.find((e, i) => {
+        enemyIndex = i;
+        return e.index === posIndex;
+      });
+
+      enemy.health -= Math.round(
+        (player.weapon.damage * 0.7) +
+        (player.weapon.damage * Math.random() * 0.3)
+      );
+
+      player.health -= Math.round(
+        ((this.state.level + 1) * 10 * Math.random())
+      );
+
+      if (enemy.health < 0) {
+        newEnemies.splice(enemyIndex, 1);
+        player.experience += 10;
+        newBoard[posIndex] = 1;
+
+      } else {
+        newEnemies[enemyIndex] = enemy;
       }
+      this.setState({
+        board: newBoard,
+        enemies: newEnemies,
+        player,
+      });
+
+    } else if (posValue === 'door') {
+      newBoard.fill(0);
+      this.setState({
+        level: this.state.level + 1,
+      });
+
+      this.createMap();
     }
   }
+
+  toggleDarkness() {
+  	
+
+
+  	this.setState({
+  		darkness: !this.state.darkness,
+  	});
+  }
+
 
   clearBoard() {
     let newBoard = this.state.board.slice();
@@ -163,6 +166,7 @@ class App extends Component {
       board: newBoard
     });
   }
+
 
   createMap() {
 
@@ -410,16 +414,17 @@ class App extends Component {
       	{/* For positionning the player over GameMap */}
       	<div className="player-positioner">
 	      	<GameMap 
-	      		board={this.state.board} 
+	      		board={this.state.board}
+	      		boardW={this.state.boardW}
 	      		width={this.state.boardW}
 	      		height={this.state.boardH}
 	      		tileSize={this.state.tileSize}
+	      		darkness={this.state.darkness}
+	      		player={this.state.player}
 	      	/>
 	      	<Player player={this.state.player} tileSize={this.state.tileSize} />
+	      	<button onClick={this.toggleDarkness}>Toggle Darkness</button>
       	</div>
-      	{<button onClick={this.clearBoard} >Clear</button>}
-      	{<button onClick={this.createMap} >Generate</button>}
-      	<p>Health {this.state.player.health}</p>
       </div>
     );
   }

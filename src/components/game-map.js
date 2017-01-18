@@ -1,37 +1,68 @@
-import React, { Component } from 'react';
+import React from 'react';
 import Square from './square.js';
 
-class GameMap extends Component {
-	shouldComponentUpdate(nextProps, nextState) {
-		let board = this.props.board;
-		let newBoard = nextProps.board;
+const GameMap = ({
+  board,
+  boardW,
+  tileSize,
+  width,
+  height,
+  darkness,
+  player,
+}) => {
 
-		let returner = false;
-		for (let i = 0; i < board.length; i++) {
-			if(board[i] !== newBoard[i]) {
-				returner =  true;
-				break;
-			} 
-		}
+  let style = {
+    width: width * tileSize,
+    height: height * tileSize
+  };
 
-		return returner;
-	}
 
-  render() {
-  	let tileSize = this.props.tileSize;
-  	let width = this.props.width;
-  	let height = this.props.height;
-  	let board = this.props.board;
+  let color;
 
-    let style = {
-      width: width * tileSize,
-      height: height * tileSize
-    };
+  let gameMap = board.map((position, index) => {
+    if (darkness) {
 
-    let color;
+      // Convert index to x and y components
+      let x = index % boardW;
+      let y = Math.floor(index / boardW);
 
-    let gameMap = board.map((position, index) => {
+      // Distance Formula 
+      let dist = Math.sqrt(
+        Math.pow(x - player.x, 2) + Math.pow(y - player.y, 2)
+      );
 
+      // Comparison for assignement
+      let isClose = dist < 6;
+
+      if (isClose) {
+        switch (position) {
+          case 1: // Tile
+            color = 'white';
+            break;
+          case 0:
+            color = 'grey';
+            break;
+          case 'enemy':
+            color = 'red';
+            break;
+          case 'health':
+            color = 'green';
+            break;
+          case 'weapon':
+            color = 'orange';
+            break;
+          case 'door':
+            color = 'purple';
+            break;
+          default:
+            color = 'black';
+            break;
+        }
+      } else {
+        color = 'black';
+      }
+
+    } else {
       switch (position) {
         case 1: // Tile
           color = 'white';
@@ -55,16 +86,16 @@ class GameMap extends Component {
           color = 'black';
           break;
       }
+    }
 
-      return <Square key={index} color={color} size={tileSize}/>
-    });
+    return <Square key={index} color={color} size={tileSize}/>
+  });
 
-    return (
-      <div className="game-map" style={style}>
+  return (
+    <div className="game-map" style={style}>
 				{gameMap}			
 			</div>
-    );
-  }
-}
+  );
+};
 
 export default GameMap;
