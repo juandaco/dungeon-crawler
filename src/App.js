@@ -21,22 +21,21 @@ class App extends Component {
       boardH,
       board,
       enemies: [],
-      health: [],
       weapons: [
-        { type: 'Dagger', damage: '5' },
+        { type: 'Dagger', damage: 14 },
         { type: 'Mace', damage: '10' },
         { type: 'Axe', damage: '15' },
         { type: 'dagger', damage: '20' },
       ],
-      door: [],
       player: {
         x: 0,
         y: 0,
         health: 100,
-        level: 1,
+        level: 0,
+        experience: 0,
         weapon: {
           type: 'Wooden Stick',
-          damage: 3
+          damage: 7
         },
       },
       boss: {},
@@ -59,34 +58,102 @@ class App extends Component {
   }
 
   handleKeyboard(e) {
-    let board = this.state.board;
+    let newBoard = this.state.board.slice();
     let player = this.state.player;
     let index = player.x + player.y * this.state.boardW;
 
-    if (e.key === 'ArrowRight') {
-    	let right = board[index + 1];
 
-      if ( right === 1) {
+    if (e.key === 'ArrowRight') {
+      let right = newBoard[index + 1];
+
+      if (right === 1) {
         player.x++;
-      } 
-      
+        newBoard[index + 1] = 1;
+        this.setState({
+          player,
+          board: newBoard,
+        });
+      } else if (right === 'health') {
+        player.health += 20;
+        player.x++;
+        newBoard[index + 1] = 1;
+        this.setState({
+          player,
+          board: newBoard,
+        });
+      } else if (right === 'weapon') {
+        player.weapon = this.state.weapons[this.state.level];
+        player.x++;
+        newBoard[index + 1] = 1;
+        this.setState({
+          player,
+          board: newBoard,
+        });
+      } else if (right === 'enemy') {
+
+        let newEnemies = this.state.enemies.slice();
+        let enemyIndex;
+
+        // Find enemy in array
+        let enemy = this.state.enemies.find((e, i) => {
+          enemyIndex = i;
+          return e.index === index + 1;
+        });
+
+        enemy.health -= Math.round(
+          (player.weapon.damage * 0.7) +
+          (player.weapon.damage * Math.random() * 0.3)
+        );
+
+        player.health -= Math.round(
+          ((this.state.level + 1) * 10 * Math.random())
+        );
+
+        if (enemy.health < 0) {
+          newEnemies.splice(enemyIndex, 1);
+          player.experience += 10;
+          newBoard[index + 1] = 1;
+
+        } else {
+          newEnemies[enemyIndex] = enemy;
+        }
+        this.setState({
+          board: newBoard,
+          enemies: newEnemies,
+          player,
+        });
+
+      } else if (right === 'door') {
+        newBoard.fill(0);
+        this.setState({
+          level: this.state.level + 1,
+        });
+
+        this.createMap();
+      }
+
     } else if (e.key === 'ArrowLeft') {
-      if (board[index - 1] === 1) {
+      if (newBoard[index - 1] === 1) {
         player.x--;
+        this.setState({
+          player,
+        });
       }
     } else if (e.key === 'ArrowUp') {
-      if (board[index - this.state.boardW] === 1) {
+      if (newBoard[index - this.state.boardW] === 1) {
         player.y--;
+        this.setState({
+          player,
+        });
       }
     } else if (e.key === 'ArrowDown') {
-      if (board[index + this.state.boardW] === 1) {
+      if (newBoard[index + this.state.boardW] === 1) {
         player.y++;
+        this.setState({
+          player,
+        });
       }
     }
-
-    this.setState({
-      player,
-    });
   }
 
   clearBoard() {
@@ -100,7 +167,7 @@ class App extends Component {
   createMap() {
 
     // Copy the by value for avoiding mutations.
-    let newBoard = this.state.board.slice();
+    let newBoard = new Array(this.state.boardW * this.state.boardH).fill(0);
 
     // Generates a Random Rectangle within board limits
     const randomRect = () => {
@@ -295,9 +362,8 @@ class App extends Component {
     for (let i = 0; i < enemies.length; i++) {
       let rnd = possible[Math.floor(Math.random() * possible.length)];
       let enemy = {
-        x: rnd % this.state.boardW,
-        y: Math.floor(rnd / this.state.boardW),
-        level: 1,
+        index: rnd,
+        health: 30,
       };
       enemies[i] = enemy;
       newBoard[rnd] = 'enemy';
@@ -307,18 +373,10 @@ class App extends Component {
 
 
 
-    let healthPack = new Array(10);
-    // Health Items
-    for (let i = 0; i < healthPack.length; i++) {
+    // Health Item Number given by loop
+    for (let i = 0; i < 10; i++) {
       let rnd = possible[Math.floor(Math.random() * possible.length)];
-      let healthItem = {
-        x: rnd % this.state.boardW,
-        y: Math.floor(rnd / this.state.boardW),
-        level: 1,
-      };
-      healthPack[i] = healthItem;
       newBoard[rnd] = 'health';
-
       possible.splice(possible.indexOf(rnd), 1);
     }
 
@@ -342,7 +400,6 @@ class App extends Component {
     this.setState({
       board: newBoard,
       enemies: enemies,
-      health: healthPack,
       player,
     });
   }
@@ -362,12 +419,11 @@ class App extends Component {
       	</div>
       	{<button onClick={this.clearBoard} >Clear</button>}
       	{<button onClick={this.createMap} >Generate</button>}
+      	<p>Health {this.state.player.health}</p>
       </div>
     );
   }
 }
-
-
 
 
 export default App;
