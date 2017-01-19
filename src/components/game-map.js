@@ -41,6 +41,9 @@ const GameMap = ({
           case 0:
             color = 'grey';
             break;
+          case 'player':
+            color = 'blue';
+            break;
           case 'enemy':
             color = 'red';
             break;
@@ -68,6 +71,9 @@ const GameMap = ({
           break;
         case 0:
           color = 'grey';
+          break;
+        case 'player':
+          color = 'blue';
           break;
         case 'enemy':
           color = 'red';

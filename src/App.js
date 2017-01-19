@@ -6,7 +6,6 @@ import './App.css';
 // Components
 import GameInfo from './components/game-info';
 import GameMap from './components/game-map';
-import Player from './components/player';
 import StatusMessage from './components/status-message';
 
 
@@ -61,6 +60,7 @@ class App extends Component {
     this.enemyFight = this.enemyFight.bind(this);
     this.bossFight = this.bossFight.bind(this);
     this.gameLost = this.gameLost.bind(this);
+    this.gameWon = this.gameWon.bind(this);
     this.restartGame = this.restartGame.bind(this);
   }
 
@@ -75,8 +75,6 @@ class App extends Component {
   }
 
   handleKeyboard(e) {
-    e.preventDefault();
-
     if (!this.state.showMessage) {
       // Variable declaration
       let player = this.state.player;
@@ -86,15 +84,19 @@ class App extends Component {
       // Only Receive Input when the end game message isn't showing
       switch (e.key) {
         case 'ArrowRight':
+        	e.preventDefault();
           posIndex = index + 1;
           break;
         case 'ArrowLeft':
+        	e.preventDefault();
           posIndex = index - 1;
           break;
         case 'ArrowUp':
+        	e.preventDefault();
           posIndex = index - this.state.boardW;
           break;
         case 'ArrowDown':
+        	e.preventDefault();
           posIndex = index + this.state.boardW;
           break;
         default:
@@ -125,9 +127,11 @@ class App extends Component {
     let newBoard = this.state.board.slice();
     let player = this.state.player;
 
+    newBoard[(player.x + player.y * this.state.boardW)] = 1;
+
     player.x = posIndex % this.state.boardW;
     player.y = Math.floor(posIndex / this.state.boardW);
-    newBoard[posIndex] = 1;
+    newBoard[posIndex] = 'player';
     this.setState({
       player,
       board: newBoard,
@@ -219,6 +223,17 @@ class App extends Component {
     setTimeout(() => {
       this.restartGame();
     }, 2000);
+  }
+
+  gameWon() {
+  	this.setState({
+  	  showMessage: true,
+  	  won: true,
+  	});
+  	setTimeout(() => {
+  	  this.restartGame();
+  	}, 2000);
+
   }
 
   restartGame() {
@@ -457,6 +472,7 @@ class App extends Component {
     // Set Paths in board
     setPosInBoard(paths);
 
+
     let enemies = new Array(14);
     // Create Enemies
     for (let i = 0; i < enemies.length; i++) {
@@ -493,6 +509,7 @@ class App extends Component {
 
     // Player Position in board
     rnd = possible[Math.floor(Math.random() * possible.length)];
+    newBoard[rnd] = 'player';
     possible.splice(possible.indexOf(rnd), 1);
     let player = this.state.player;
     player.x = rnd % this.state.boardW;
@@ -529,7 +546,6 @@ class App extends Component {
 	      		darkness={this.state.darkness}
 	      		player={this.state.player}
 	      	/>
-	      	<Player player={this.state.player} tileSize={this.state.tileSize} />
       	</div>
       	<ReactCSSTransitionGroup
           transitionName="message"

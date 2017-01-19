@@ -15,6 +15,7 @@ const GameInfo = ({
 				<p><strong>Attack:</strong> {player.weapon.damage}</p>
 				<p><strong>Level:</strong> {player.level}</p>
 				<p><strong>NextLevel:</strong> {player.nextLevel} </p>
+				<p><strong>Dungeon:</strong> {level} </p>
 			</div>
 			<button onClick={toggleDarkness}>Toggle Darkness</button>
 		</div>
