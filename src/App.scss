@@ -84,18 +84,31 @@ header {
 }
 
 .banner {
+  font-family: 'Russo One', sans-serif;
+  font-size: 3em;
+
   position: absolute;
-  top: 30%;
+  top: 35%;
   left: 50%;
+
+  display: flex;
 
   width: $message-width;
   height: $message-height;
 
   transform: translate(-$message-width/2, -$message-height/2);
+  text-align: center;
   pointer-events: none;
 
   border-radius: 10px;
-  background-color: red;
+  background-color: #b30000;
+
+  align-items: center;
+  justify-content: center;
+  p {
+    color: white;
+    text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9);
+  }
 }
 
 .message-enter {
@@ -113,7 +126,7 @@ header {
 }
 
 .message-leave.message-leave-active {
-  transition: opacity 3000ms ease-in;
+  transition: opacity 1000ms ease-in;
 
   opacity: .01;
 }

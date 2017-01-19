@@ -3,7 +3,7 @@ import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 import './App.css';
 
-// Components2
+// Components
 import GameInfo from './components/game-info';
 import GameMap from './components/game-map';
 import Player from './components/player';
@@ -27,14 +27,14 @@ class App extends Component {
       enemies: [],
       weapons: [
         { type: 'Dagger', damage: 14 },
-        { type: 'Mac7e', damage: '10' },
+        { type: 'Mace', damage: '10' },
         { type: 'Axe', damage: '15' },
         { type: 'dagger', damage: '20' },
       ],
       player: {
         x: 0,
         y: 0,
-        health: 100,
+        health: 10,
         level: 0,
         nextLevel: 60,
         experience: 0,
@@ -54,10 +54,18 @@ class App extends Component {
     this.clearBoard = this.clearBoard.bind(this);
     this.handleKeyboard = this.handleKeyboard.bind(this);
     this.toggleDarkness = this.toggleDarkness.bind(this);
-    this.showBanner = this.showBanner.bind(this);
+    this.toggleMessage = this.toggleMessage.bind(this);
+    this.movePlayer = this.movePlayer.bind(this);
+    this.addHealth = this.addHealth.bind(this);
+    this.foundWeapon = this.foundWeapon.bind(this);
+    this.enemyFight = this.enemyFight.bind(this);
+    this.bossFight = this.bossFight.bind(this);
+    this.gameLost = this.gameLost.bind(this);
+    this.restartGame = this.restartGame.bind(this);
   }
 
   componentDidMount() {
+    // Create Map at Startup Time
     this.createMap();
 
     // Add Keyboard Event Listener
@@ -67,104 +75,172 @@ class App extends Component {
   }
 
   handleKeyboard(e) {
-    // Variable declaration
+    e.preventDefault();
+
+    if (!this.state.showMessage) {
+      // Variable declaration
+      let player = this.state.player;
+      let index = player.x + player.y * this.state.boardW;
+      let posValue, posIndex;
+
+      // Only Receive Input when the end game message isn't showing
+      switch (e.key) {
+        case 'ArrowRight':
+          posIndex = index + 1;
+          break;
+        case 'ArrowLeft':
+          posIndex = index - 1;
+          break;
+        case 'ArrowUp':
+          posIndex = index - this.state.boardW;
+          break;
+        case 'ArrowDown':
+          posIndex = index + this.state.boardW;
+          break;
+        default:
+          break;
+      }
+
+      posValue = this.state.board[posIndex];
+
+      if (posValue === 1) { // Empty Space
+        this.movePlayer(posIndex);
+      } else if (posValue === 'health') {
+        this.addHealth();
+        this.movePlayer(posIndex);
+      } else if (posValue === 'weapon') {
+        this.foundWeapon();
+        this.movePlayer(posIndex);
+      } else if (posValue === 'enemy') {
+        this.enemyFight(posIndex);
+      } else if (posValue === 'door') {
+        this.nextLevel();
+      } else if (posValue === 'boss') {
+        this.bossFight(posIndex);
+      }
+    }
+  }
+
+  movePlayer(posIndex) {
     let newBoard = this.state.board.slice();
     let player = this.state.player;
-    let index = player.x + player.y * this.state.boardW;
-    let posValue, posIndex;
 
+    player.x = posIndex % this.state.boardW;
+    player.y = Math.floor(posIndex / this.state.boardW);
+    newBoard[posIndex] = 1;
+    this.setState({
+      player,
+      board: newBoard,
+    });
+  }
 
-    if (e.key === 'ArrowRight') {
-    	e.preventDefault();
-      posIndex = index + 1;
-    } else if (e.key === 'ArrowLeft') {
-    	e.preventDefault();
-      posIndex = index - 1;
-    } else if (e.key === 'ArrowUp') {
-    	e.preventDefault();
-      posIndex = index - this.state.boardW;
-    } else if (e.key === 'ArrowDown') {
-    	e.preventDefault();
-      posIndex = index + this.state.boardW;
+  addHealth() {
+    let player = this.state.player;
+    player.health += 20;
+    this.setState({
+      player,
+    });
+  }
+
+  foundWeapon() {
+    let player = this.state.player;
+    player.weapon = this.state.weapons[this.state.level];
+    this.setState({
+      player,
+    });
+  }
+
+  enemyFight(posIndex) {
+    let player = this.state.player;
+    let newBoard = this.state.board.slice();
+    let newEnemies = this.state.enemies.slice();
+    let enemyIndex;
+
+    // Find enemy in array
+    let enemy = this.state.enemies.find((e, i) => {
+      enemyIndex = i;
+      return e.index === posIndex;
+    });
+
+    // Enemy Health lose for each attack
+    enemy.health -= Math.round(
+      (player.weapon.damage * 0.7) +
+      (player.weapon.damage * Math.random() * 0.3)
+    );
+
+    // Delete enemy if it's dead
+    if (enemy.health <= 0) {
+      newEnemies.splice(enemyIndex, 1);
+      player.experience += 10;
+      newBoard[posIndex] = 1;
+
+    } else {
+      newEnemies[enemyIndex] = enemy;
     }
 
-    posValue = newBoard[posIndex];
+    // Player looses health in each attack
+    player.health -= Math.round(
+      ((this.state.level + 1) * 10 * Math.random())
+    );
 
-    if (posValue === 1) {
-      player.x = posIndex % this.state.boardW;
-      player.y = Math.floor(posIndex / this.state.boardW);
-      newBoard[posIndex] = 1;
+
+    // Loose game 
+    if (player.health <= 0) {
+      this.gameLost();
+    } else {
       this.setState({
-        player,
         board: newBoard,
-      });
-    } else if (posValue === 'health') {
-      player.health += 20;
-      player.x = posIndex % this.state.boardW;
-      player.y = Math.floor(posIndex / this.state.boardW);
-      newBoard[posIndex] = 1;
-      this.setState({
+        enemies: newEnemies,
         player,
-        board: newBoard,
       });
-    } else if (posValue === 'weapon') {
-      player.weapon = this.state.weapons[this.state.level];
-      player.x = posIndex % this.state.boardW;
-      player.y = Math.floor(posIndex / this.state.boardW);
-      newBoard[posIndex] = 1;
-      this.setState({
-        player,
-        board: newBoard,
-      });
-    } else if (posValue === 'enemy') {
-
-      let newEnemies = this.state.enemies.slice();
-      let enemyIndex;
-
-      // Find enemy in array
-      let enemy = this.state.enemies.find((e, i) => {
-        enemyIndex = i;
-        return e.index === posIndex;
-      });
-
-      enemy.health -= Math.round(
-        (player.weapon.damage * 0.7) +
-        (player.weapon.damage * Math.random() * 0.3)
-      );
-
-      player.health -= Math.round(
-        ((this.state.level + 1) * 10 * Math.random())
-      );
-
-      if (enemy.health < 0) {
-        newEnemies.splice(enemyIndex, 1);
-        player.experience += 10;
-        newBoard[posIndex] = 1;
-
-      } else {
-        newEnemies[enemyIndex] = enemy;
-      }
-
-
-      if (player.health <= 0) {
-
-
-      } else {
-	      this.setState({
-	        board: newBoard,
-	        enemies: newEnemies,
-	        player,
-	      });      	
-      }
-
-    } else if (posValue === 'door') {
-      newBoard.fill(0);
-      this.setState({
-        level: this.state.level + 1,
-      });
-
-      this.createMap();
     }
+  }
+
+  bossFight(posIndex) {
+
+  }
+
+  nextLevel() {
+    this.setState({
+      level: this.state.level + 1,
+    });
+
+    this.createMap();
+  }
+
+  gameLost() {
+    let player = this.state.player;
+    player.health = 0;
+    this.setState({
+      player,
+      showMessage: true,
+      won: false,
+    });
+    setTimeout(() => {
+      this.restartGame();
+    }, 2000);
+  }
+
+  restartGame() {
+    this.setState({
+      enemies: [],
+      player: {
+        x: 0,
+        y: 0,
+        health: 10,
+        level: 0,
+        nextLevel: 60,
+        experience: 0,
+        weapon: {
+          type: 'Wooden Stick',
+          damage: 7
+        },
+      },
+      level: 0,
+      showMessage: false,
+      won: false,
+    });
+    this.createMap();
   }
 
   toggleDarkness() {
@@ -173,7 +249,7 @@ class App extends Component {
     });
   }
 
-  showBanner() {
+  toggleMessage() {
     this.setState({
       showMessage: !this.state.showMessage,
     });
@@ -186,7 +262,6 @@ class App extends Component {
       board: newBoard
     });
   }
-
 
   createMap() {
 
@@ -394,7 +469,7 @@ class App extends Component {
       };
       enemies[i] = enemy;
     }
- 
+
 
     // Health Item Number given by loop
     for (let i = 0; i < 12; i++) {
@@ -459,7 +534,7 @@ class App extends Component {
       	<ReactCSSTransitionGroup
           transitionName="message"
           transitionEnterTimeout={1000}
-          transitionLeaveTimeout={3000}
+          transitionLeaveTimeout={1000}
         >
 	      	{this.state.showMessage ? statMsg : null}
         </ReactCSSTransitionGroup>

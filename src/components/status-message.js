@@ -4,11 +4,11 @@ const StatusMessage = ({ won }) => {
   let style;
   if (won) {
     style = {
-      backgroundColor: 'green',
+      backgroundColor: '#339966',
     };
   } else {
     style = {
-      backgroundColor: 'red',
+      backgroundColor: '#ff3333',
     };
   }
 
