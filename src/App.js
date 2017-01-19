@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 import './App.css';
 
-// Components
+// Components2
+import GameInfo from './components/game-info';
 import GameMap from './components/game-map';
-import Player from './components/player.js';
+import Player from './components/player';
+import StatusMessage from './components/status-message';
 
 
 class App extends Component {
@@ -33,6 +36,7 @@ class App extends Component {
         y: 0,
         health: 100,
         level: 0,
+        nextLevel: 60,
         experience: 0,
         weapon: {
           type: 'Wooden Stick',
@@ -41,6 +45,8 @@ class App extends Component {
       },
       boss: {},
       level: 0,
+      showMessage: false,
+      won: false,
     };
 
     // Method's bindings
@@ -48,6 +54,7 @@ class App extends Component {
     this.clearBoard = this.clearBoard.bind(this);
     this.handleKeyboard = this.handleKeyboard.bind(this);
     this.toggleDarkness = this.toggleDarkness.bind(this);
+    this.showBanner = this.showBanner.bind(this);
   }
 
   componentDidMount() {
@@ -68,12 +75,16 @@ class App extends Component {
 
 
     if (e.key === 'ArrowRight') {
+    	e.preventDefault();
       posIndex = index + 1;
     } else if (e.key === 'ArrowLeft') {
+    	e.preventDefault();
       posIndex = index - 1;
     } else if (e.key === 'ArrowUp') {
+    	e.preventDefault();
       posIndex = index - this.state.boardW;
     } else if (e.key === 'ArrowDown') {
+    	e.preventDefault();
       posIndex = index + this.state.boardW;
     }
 
@@ -133,11 +144,18 @@ class App extends Component {
       } else {
         newEnemies[enemyIndex] = enemy;
       }
-      this.setState({
-        board: newBoard,
-        enemies: newEnemies,
-        player,
-      });
+
+
+      if (player.health <= 0) {
+
+
+      } else {
+	      this.setState({
+	        board: newBoard,
+	        enemies: newEnemies,
+	        player,
+	      });      	
+      }
 
     } else if (posValue === 'door') {
       newBoard.fill(0);
@@ -150,14 +168,16 @@ class App extends Component {
   }
 
   toggleDarkness() {
-  	
-
-
-  	this.setState({
-  		darkness: !this.state.darkness,
-  	});
+    this.setState({
+      darkness: !this.state.darkness,
+    });
   }
 
+  showBanner() {
+    this.setState({
+      showMessage: !this.state.showMessage,
+    });
+  }
 
   clearBoard() {
     let newBoard = this.state.board.slice();
@@ -178,7 +198,7 @@ class App extends Component {
       //RoomSpecs
       let maxSize = 15;
       let minSize = 5;
-      let distFromBorder = 3
+      let distFromBorder = 2;
 
       const w = Math.round(Math.random() * (maxSize - minSize)) + minSize;
       const h = Math.round(Math.random() * (maxSize - minSize)) + minSize;
@@ -346,9 +366,8 @@ class App extends Component {
       posGeneral = posGeneral.concat(rectPos);
     }
 
-    // Set both rooms and paths in the board
+    // Set Rectangles in the board
     setPosInBoard(posGeneral);
-
 
     // Get possible sposts on the board
     let possible = newBoard.map((position, index) => {
@@ -360,46 +379,50 @@ class App extends Component {
     }).filter((position => position));
 
 
+    // Set Paths in board
+    setPosInBoard(paths);
 
-    let enemies = new Array(15);
+    let enemies = new Array(14);
     // Create Enemies
     for (let i = 0; i < enemies.length; i++) {
       let rnd = possible[Math.floor(Math.random() * possible.length)];
+      possible.splice(possible.indexOf(rnd), 1);
+      newBoard[rnd] = 'enemy';
       let enemy = {
         index: rnd,
         health: 30,
       };
       enemies[i] = enemy;
-      newBoard[rnd] = 'enemy';
-
-      possible.splice(possible.indexOf(rnd), 1);
     }
-
-
+ 
 
     // Health Item Number given by loop
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 12; i++) {
       let rnd = possible[Math.floor(Math.random() * possible.length)];
-      newBoard[rnd] = 'health';
       possible.splice(possible.indexOf(rnd), 1);
+      newBoard[rnd] = 'health';
     }
+
 
     // Weapon for level
     let rnd = possible[Math.floor(Math.random() * possible.length)];
+    possible.splice(possible.indexOf(rnd), 1);
     newBoard[rnd] = 'weapon';
 
 
     // Door to next level
     rnd = possible[Math.floor(Math.random() * possible.length)];
+    possible.splice(possible.indexOf(rnd), 1);
     newBoard[rnd] = 'door';
+
 
     // Player Position in board
     rnd = possible[Math.floor(Math.random() * possible.length)];
+    possible.splice(possible.indexOf(rnd), 1);
     let player = this.state.player;
     player.x = rnd % this.state.boardW;
     player.y = Math.floor(rnd / this.state.boardW);
 
-    setPosInBoard(paths);
 
     this.setState({
       board: newBoard,
@@ -409,22 +432,37 @@ class App extends Component {
   }
 
   render() {
+    let statMsg = <StatusMessage key={"banner"} won={this.state.won}/>;
     return (
       <div className="App" >
+      	<header>
+      		<h1 className="title">React Dungeon Crawler</h1>
+      		<h4 className="subtitle">Beat the boss in level 4</h4>
+      	</header>
+      	<GameInfo 
+      		player={this.state.player} 
+      		level={this.state.level}
+      		toggleDarkness={this.toggleDarkness} 
+      	/>
       	{/* For positionning the player over GameMap */}
       	<div className="player-positioner">
 	      	<GameMap 
 	      		board={this.state.board}
 	      		boardW={this.state.boardW}
-	      		width={this.state.boardW}
-	      		height={this.state.boardH}
+	      		boardH={this.state.boardH}
 	      		tileSize={this.state.tileSize}
 	      		darkness={this.state.darkness}
 	      		player={this.state.player}
 	      	/>
 	      	<Player player={this.state.player} tileSize={this.state.tileSize} />
-	      	<button onClick={this.toggleDarkness}>Toggle Darkness</button>
       	</div>
+      	<ReactCSSTransitionGroup
+          transitionName="message"
+          transitionEnterTimeout={1000}
+          transitionLeaveTimeout={3000}
+        >
+	      	{this.state.showMessage ? statMsg : null}
+        </ReactCSSTransitionGroup>
       </div>
     );
   }

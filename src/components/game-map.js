@@ -1,19 +1,18 @@
 import React from 'react';
-import Square from './square.js';
+import Square from './square';
 
 const GameMap = ({
   board,
-  boardW,
   tileSize,
-  width,
-  height,
+  boardW,
+  boardH,
   darkness,
   player,
 }) => {
 
   let style = {
-    width: width * tileSize,
-    height: height * tileSize
+    width: boardW * tileSize,
+    height: boardH * tileSize
   };
 
 
